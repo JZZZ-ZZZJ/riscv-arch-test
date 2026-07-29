@@ -1,0 +1,88 @@
+name: CtrlCV current ACT4 baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      extensions:
+        description: "ACT4 extensions, comma separated"
+        required: true
+        default: "I,M,Zicsr"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-current-elfs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Fetch current repository commit
+        shell: bash
+        env:
+          REPOSITORY_URL: https://github.com/${{ github.repository }}.git
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          git init source
+          git -C source remote add origin "$REPOSITORY_URL"
+          git -C source fetch --depth=1 origin "$COMMIT_SHA"
+          git -C source checkout --detach FETCH_HEAD
+
+          test "$(git -C source rev-parse HEAD)" = "$COMMIT_SHA"
+
+          sudo chown -R 1000:1000 source
+
+      - name: Validate CtrlCV config and build ELFs
+        shell: bash
+        env:
+          ACT4_EXTENSIONS: ${{ inputs.extensions }}
+          ACT4_CONFIG: config/cores/jzzz/ctrl-cv-rv32im-current/test_config.yaml
+          ACT4_IMAGE: ghcr.io/riscv/act4-build@sha256:4b4d8d687bdbfc33e66b107f3baa0394efd6dc804f71f5048ec3e21d3bc96d91
+        run: |
+          set -euo pipefail
+
+          docker pull "$ACT4_IMAGE"
+
+          docker run --rm \
+            --platform linux/amd64 \
+            --user 1000:1000 \
+            --env ACT4_EXTENSIONS \
+            --env ACT4_CONFIG \
+            --volume "$GITHUB_WORKSPACE/source:/act4" \
+            --workdir /act4 \
+            "$ACT4_IMAGE" \
+            bash -lc '
+              set -euo pipefail
+
+              mise trust /act4/.mise.toml
+              mise install
+              mise exec -- uv sync
+
+              export PATH="/act4/.venv/bin:$PATH"
+              export UV_LINK_MODE=copy
+
+              make clean clean-tests
+
+              make -j1 \
+                CONFIG_FILES="$ACT4_CONFIG" \
+                EXTENSIONS="$ACT4_EXTENSIONS" \
+                CLEAN_INTERMEDIATES=True \
+                2>&1 | tee /act4/ctrlcv-current-cloud.log
+            '
+
+      - name: Upload CtrlCV ACT4 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctrlcv-current-${{ github.run_number }}
+          path: |
+            source/ctrlcv-current-cloud.log
+            source/work/ctrl-cv-rv32im-current/.validated
+            source/work/ctrl-cv-rv32im-current/extensions.txt
+            source/work/ctrl-cv-rv32im-current/elfs/
+            source/work/ctrl-cv-rv32im-current/build/
+          if-no-files-found: warn
+          retention-days: 14
