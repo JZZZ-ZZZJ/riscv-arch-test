@@ -55,6 +55,9 @@ jobs:
               set -euo pipefail
 
               mise trust /act4/.mise.toml
+              export PATH="/act4/.venv/bin:$PATH"
+              export UV_LINK_MODE=copy
+
               make clean clean-tests
 
               make -j2 sail-rv32-max \
