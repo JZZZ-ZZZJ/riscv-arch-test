@@ -71,7 +71,6 @@ params:
   MTVEC_BASE_ALIGNMENT_DIRECT: 4
 
   # Performance counters are not currently implemented as architectural CSRs
-  HPM_EVENTS: [0]
   HPM_COUNTER_EN: [
     false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false,
@@ -81,12 +80,6 @@ params:
 
   MCOUNTINHIBIT_IMPLEMENTED: false
 
-  COUNTINHIBIT_EN: [
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false, false
-  ]
 
   MCOUNTENABLE_EN: [
     false, false, false, false, false, false, false, false,
