@@ -3,9 +3,12 @@ ENTRY(rvtest_entry_point)
 
 MEMORY
 {
-  /* 当前实际实现的物理存储容量，不包含待扩展区域 */
-  IROM (rx) : ORIGIN = 0x80000000, LENGTH = 16K
-  DRAM (rw) : ORIGIN = 0x80100000, LENGTH = 256K
+  /*
+   * ACT4仿真使用SoC地址图中预留的完整窗口。
+   * 板级Vivado IP仍然是16 KiB IROM和256 KiB DRAM。
+   */
+  IROM (rx) : ORIGIN = 0x80000000, LENGTH = 1M
+  DRAM (rw) : ORIGIN = 0x80100000, LENGTH = 1M
 }
 
 TEST_BASE = ORIGIN(IROM);
