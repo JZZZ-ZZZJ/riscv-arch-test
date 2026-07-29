@@ -55,12 +55,15 @@ jobs:
               set -euo pipefail
 
               mise trust /act4/.mise.toml
+
+              mise install
+              mise exec -- uv sync
+
               export PATH="/act4/.venv/bin:$PATH"
               export UV_LINK_MODE=copy
 
               make clean clean-tests
-
-              make -j2 sail-rv32-max \
+              make -j1 sail-rv32-max \
                 EXTENSIONS="$ACT4_EXTENSIONS" \
                 CLEAN_INTERMEDIATES=True \
                 2>&1 | tee /act4/act4-cloud.log
