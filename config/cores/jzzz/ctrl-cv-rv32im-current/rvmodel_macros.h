@@ -62,5 +62,27 @@ fromhost:                                                   \
  * No access-fault address, timer or interrupt-generator macros are
  * declared in current-v1. They will be added with the interrupt work.
  */
+/*
+ * ACT4 requires these platform macros to exist even when privileged
+ * and interrupt tests are disabled.
+ *
+ * They are deliberately no-ops in current-v1 because the RTL has no
+ * interrupt generator or complete interrupt handling yet.
+ */
+#define RVMODEL_INTERRUPT_LATENCY 1
+
+#define RVMODEL_TIMER_INT_SOON_DELAY 1
+
+#define RVMODEL_SET_MEXT_INT(_R1, _R2)
+#define RVMODEL_CLR_MEXT_INT(_R1, _R2)
+
+#define RVMODEL_SET_MSW_INT(_R1, _R2)
+#define RVMODEL_CLR_MSW_INT(_R1, _R2)
+
+#define RVMODEL_SET_SEXT_INT(_R1, _R2)
+#define RVMODEL_CLR_SEXT_INT(_R1, _R2)
+
+#define RVMODEL_SET_SSW_INT(_R1, _R2)
+#define RVMODEL_CLR_SSW_INT(_R1, _R2)
 
 #endif
