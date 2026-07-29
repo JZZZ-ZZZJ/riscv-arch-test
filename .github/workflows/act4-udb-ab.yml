@@ -1,71 +1,75 @@
-name: ACT4 UDB cloud A-B
+name: ACT4 cloud test
 
 on:
   workflow_dispatch:
+    inputs:
+      extensions:
+        description: "ACT4 extensions, comma separated"
+        required: true
+        default: "I"
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  validate:
+  rv32-sail:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 90
 
     steps:
-      - name: Fetch exact ACT4 commit
+      - name: Fetch current repository commit
         shell: bash
+        env:
+          REPOSITORY_URL: https://github.com/${{ github.repository }}.git
+          COMMIT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
           git init source
-          git -C source remote add origin \
-            https://github.com/riscv/riscv-arch-test.git
-
-          git -C source fetch --depth=1 origin \
-            b68ba3d1bc3299159595d68ea485c6c6565096b3
-
+          git -C source remote add origin "$REPOSITORY_URL"
+          git -C source fetch --depth=1 origin "$COMMIT_SHA"
           git -C source checkout --detach FETCH_HEAD
 
-          test "$(git -C source rev-parse HEAD)" = \
-            "b68ba3d1bc3299159595d68ea485c6c6565096b3"
+          test "$(git -C source rev-parse HEAD)" = "$COMMIT_SHA"
+          sudo chown -R 1000:1000 source
 
-      - name: Validate UDB three times
+      - name: Build and run ACT4 tests with Sail
         shell: bash
+        env:
+          ACT4_EXTENSIONS: ${{ inputs.extensions }}
+          ACT4_IMAGE: ghcr.io/riscv/act4-build@sha256:4b4d8d687bdbfc33e66b107f3baa0394efd6dc804f71f5048ec3e21d3bc96d91
         run: |
-          set +e
+          set -euo pipefail
 
-          image='ghcr.io/riscv/act4-build@sha256:4b4d8d687bdbfc33e66b107f3baa0394efd6dc804f71f5048ec3e21d3bc96d91'
-          overall=0
+          docker pull "$ACT4_IMAGE"
 
-          for i in 1 2 3; do
-            echo "::group::UDB validation run $i"
+          docker run --rm \
+            --platform linux/amd64 \
+            --user 1000:1000 \
+            --env ACT4_EXTENSIONS \
+            --volume "$GITHUB_WORKSPACE/source:/act4" \
+            --workdir /act4 \
+            "$ACT4_IMAGE" \
+            bash -lc '
+              set -euo pipefail
 
-            docker run --rm \
-              --platform linux/amd64 \
-              --cpuset-cpus=0 \
-              --user 1000:1000 \
-              --volume "$GITHUB_WORKSPACE/source:/act4:ro" \
-              --workdir /act4 \
-              "$image" \
-              bash -lc '
-                set -e
+              mise trust /act4/.mise.toml
+              make clean clean-tests
 
-                mise trust /act4/.mise.toml
+              make -j2 sail-rv32-max \
+                EXTENSIONS="$ACT4_EXTENSIONS" \
+                CLEAN_INTERMEDIATES=True \
+                2>&1 | tee /act4/act4-cloud.log
+            '
 
-                mise exec -- env \
-                  BUNDLE_GEMFILE=/act4/framework/src/act/data/Gemfile \
-                  BUNDLE_FROZEN=true \
-                  bundle exec udb validate cfg \
-                  /act4/config/sail/sail-rv32-max/sail-rv32-max.yaml
-              '
-
-            status=$?
-            echo "run $i exit code: $status"
-            echo "::endgroup::"
-
-            if [ "$status" -ne 0 ]; then
-              overall=1
-            fi
-          done
-
-          exit "$overall"
+      - name: Upload ACT4 logs and ELFs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: act4-cloud-run-${{ github.run_number }}
+          path: |
+            source/act4-cloud.log
+            source/work/sail-rv32-max/elfs/
+          if-no-files-found: warn
+          retention-days: 14
