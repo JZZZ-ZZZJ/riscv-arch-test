@@ -1,0 +1,71 @@
+name: ACT4 UDB cloud A-B
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Fetch exact ACT4 commit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git init source
+          git -C source remote add origin \
+            https://github.com/riscv/riscv-arch-test.git
+
+          git -C source fetch --depth=1 origin \
+            b68ba3d1bc3299159595d68ea485c6c6565096b3
+
+          git -C source checkout --detach FETCH_HEAD
+
+          test "$(git -C source rev-parse HEAD)" = \
+            "b68ba3d1bc3299159595d68ea485c6c6565096b3"
+
+      - name: Validate UDB three times
+        shell: bash
+        run: |
+          set +e
+
+          image='ghcr.io/riscv/act4-build@sha256:4b4d8d687bdbfc33e66b107f3baa0394efd6dc804f71f5048ec3e21d3bc96d91'
+          overall=0
+
+          for i in 1 2 3; do
+            echo "::group::UDB validation run $i"
+
+            docker run --rm \
+              --platform linux/amd64 \
+              --cpuset-cpus=0 \
+              --user 1000:1000 \
+              --volume "$GITHUB_WORKSPACE/source:/act4:ro" \
+              --workdir /act4 \
+              "$image" \
+              bash -lc '
+                set -e
+
+                mise trust /act4/.mise.toml
+
+                mise exec -- env \
+                  BUNDLE_GEMFILE=/act4/framework/src/act/data/Gemfile \
+                  BUNDLE_FROZEN=true \
+                  bundle exec udb validate cfg \
+                  /act4/config/sail/sail-rv32-max/sail-rv32-max.yaml
+              '
+
+            status=$?
+            echo "run $i exit code: $status"
+            echo "::endgroup::"
+
+            if [ "$status" -ne 0 ]; then
+              overall=1
+            fi
+          done
+
+          exit "$overall"
