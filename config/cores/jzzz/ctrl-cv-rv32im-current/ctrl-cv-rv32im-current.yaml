@@ -6,8 +6,9 @@ kind: architecture configuration
 type: fully configured
 name: ctrl-cv-rv32im-current
 description: >-
-  Ctrl-CV RV32IMF configuration for the v9-addF RTL.
+  Ctrl-CV RV32IMF+Zba+Zbc configuration for the current RTL.
   Floating-point state uses 32 dedicated 32-bit FPRs.
+  Zbb is intentionally omitted because only a CoreMark-used subset exists.
   Privileged exceptions and interrupts remain incomplete.
 
 implemented_extensions:
@@ -15,6 +16,8 @@ implemented_extensions:
   - { name: M, version: "= 2.0" }
   - { name: F, version: "= 2.2.0" }
   - { name: Zicsr, version: "= 2.0" }
+  - { name: Zba, version: "= 1.0.0" }
+  - { name: Zbc, version: "= 1.0.0" }
 
   # UDB uses Sm to describe MXLEN and the machine-mode execution environment.
   # This does not mean the current RTL passes the complete Sm test suite.
@@ -38,10 +41,10 @@ params:
   # Current synchronous trap behavior
   PRECISE_SYNCHRONOUS_EXCEPTIONS: true
   TRAP_ON_ECALL_FROM_M: true
-  TRAP_ON_EBREAK: false
-  TRAP_ON_UNIMPLEMENTED_INSTRUCTION: false
-  TRAP_ON_RESERVED_INSTRUCTION: false
-  TRAP_ON_UNIMPLEMENTED_CSR: false
+  TRAP_ON_EBREAK: true
+  TRAP_ON_UNIMPLEMENTED_INSTRUCTION: true
+  TRAP_ON_RESERVED_INSTRUCTION: true
+  TRAP_ON_UNIMPLEMENTED_CSR: true
   TRAP_ON_ILLEGAL_WLRL: false
 
   # Current mtval behavior
@@ -52,7 +55,7 @@ params:
   REPORT_VA_IN_MTVAL_ON_LOAD_ACCESS_FAULT: false
   REPORT_VA_IN_MTVAL_ON_STORE_AMO_ACCESS_FAULT: false
   REPORT_VA_IN_MTVAL_ON_INSTRUCTION_ACCESS_FAULT: false
-  REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION: false
+  REPORT_ENCODING_IN_MTVAL_ON_ILLEGAL_INSTRUCTION: true
   MTVAL_WIDTH: 32
 
   # Nearest UDB representation.
@@ -76,7 +79,7 @@ params:
   MTVEC_ILLEGAL_WRITE_BEHAVIOR: custom
   MTVEC_BASE_ALIGNMENT_DIRECT: 4
 
-  # Performance counters are not currently implemented as architectural CSRs
+  # No mhpmcounter3..31 counters are implemented.
   HPM_COUNTER_EN: [
     false, false, false, false, false, false, false, false,
     false, false, false, false, false, false, false, false,
@@ -84,7 +87,15 @@ params:
     false, false, false, false, false, false, false, false
   ]
 
-  MCOUNTINHIBIT_IMPLEMENTED: false
+  # mcycle/minstret and their inhibit bits are implemented; all HPM inhibit
+  # bits are hardwired to zero.
+  MCOUNTINHIBIT_IMPLEMENTED: true
+  COUNTINHIBIT_EN: [
+    true, false, true, false, false, false, false, false,
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false
+  ]
 
 
   MCOUNTENABLE_EN: [

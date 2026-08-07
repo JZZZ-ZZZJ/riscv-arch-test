@@ -49,7 +49,7 @@
       }
     },
     "xtval_nonzero": {
-      "illegal_instruction": false,
+      "illegal_instruction": true,
       "software_breakpoint": false,
       "hardware_breakpoint": false,
       "load_address_misaligned": false,
@@ -410,7 +410,7 @@
       "supported": false
     },
     "Zba": {
-      "supported": false
+      "supported": true
     },
     "Zbb": {
       "supported": false
@@ -419,7 +419,7 @@
       "supported": false
     },
     "Zbc": {
-      "supported": false
+      "supported": true
     },
     "Zbkb": {
       "supported": false

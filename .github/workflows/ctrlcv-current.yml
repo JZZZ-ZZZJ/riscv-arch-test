@@ -6,7 +6,7 @@ on:
       extensions:
         description: "ACT4 extensions, comma separated"
         required: true
-        default: "I,M,Zicsr"
+        default: "I,M,F,Zicsr,Zba,Zbc"
         type: string
 
 permissions:
