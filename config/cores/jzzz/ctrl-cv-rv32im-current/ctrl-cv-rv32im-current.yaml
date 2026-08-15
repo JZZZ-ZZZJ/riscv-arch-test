@@ -34,6 +34,7 @@ params:
   MISA_CSR_IMPLEMENTED: true
   MUTABLE_MISA_M: false
   MUTABLE_MISA_F: false
+  MUTABLE_MISA_D: false
 
   # RV32F architectural state
   HW_MSTATUS_FS_DIRTY_UPDATE: precise
