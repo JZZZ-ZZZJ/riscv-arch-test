@@ -7,7 +7,7 @@ type: fully configured
 name: ctrl-cv-rv32im-current
 description: >-
   Ctrl-CV RV32IMF+Zba+Zbc configuration for the current RTL.
-  Floating-point state uses 32 dedicated 32-bit FPRs.
+Floating-point state uses 32 dedicated 64-bit FPRs.
   Zbb is intentionally omitted because only a CoreMark-used subset exists.
   Privileged exceptions and interrupts remain incomplete.
 
