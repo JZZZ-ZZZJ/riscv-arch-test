@@ -261,7 +261,7 @@
       "fflags_dirty_policy": "Fflags_Dirty_Precise"
     },
     "D": {
-      "supported": false
+      "supported": true
     },
     "V": {
       "support_level": "Disabled",
