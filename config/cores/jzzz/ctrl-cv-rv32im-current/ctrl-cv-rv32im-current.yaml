@@ -6,8 +6,8 @@ kind: architecture configuration
 type: fully configured
 name: ctrl-cv-rv32im-current
 description: >-
-  Ctrl-CV RV32IMF+Zba+Zbc configuration for the current RTL.
-Floating-point state uses 32 dedicated 64-bit FPRs.
+  Ctrl-CV RV32IMFD+Zba+Zbc configuration for the current RTL.
+  Floating-point state uses 32 dedicated 64-bit FPRs.
   Zbb is intentionally omitted because only a CoreMark-used subset exists.
   Privileged exceptions and interrupts remain incomplete.
 
@@ -15,7 +15,7 @@ implemented_extensions:
   - { name: I, version: "= 2.1" }
   - { name: M, version: "= 2.0" }
   - { name: F, version: "= 2.2.0" }
-    - { name: D, version: "= 2.2.0" }
+  - { name: D, version: "= 2.2.0" }
   - { name: Zicsr, version: "= 2.0" }
   - { name: Zba, version: "= 1.0.0" }
   - { name: Zbc, version: "= 1.0.0" }
@@ -30,7 +30,7 @@ params:
   PHYS_ADDR_WIDTH: 32
   M_MODE_ENDIANNESS: little
 
-  # misa = 0x40001120: RV32 + I + M + F
+  # misa = 0x40001128: RV32 + I + M + F + D
   MISA_CSR_IMPLEMENTED: true
   MUTABLE_MISA_M: false
   MUTABLE_MISA_F: false
